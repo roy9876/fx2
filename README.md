@@ -9,5 +9,7 @@ https://allratestoday.com/blog/fawazahmed0-exchange-api-not-standard-rate-source
 
 These are NOT real-time live exchange rates.
 For live rates you can check out these sites
+
 https://www.xe.com/
 https://www.oanda.com/currency-converter/live-exchange-rates/
+https://www.fxstreet.com/rates-charts/rates
