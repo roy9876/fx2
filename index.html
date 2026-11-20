@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Exchange Rates, Metals & Crypto (vs. USD)</title>
+    
+    <!-- DataTables Official v2 CSS Stylesheet -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css">
+    <!-- Flag Icons CSS from jsDelivr (same CDN as jQuery) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 24px 24px 60px 24px;
+            color: #212529;
+        }
+        .container {
+            max-width: 1450px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #0f2c59;
+        }
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 6px;
+            color: #0f2c59;
+        }
+        .subtitle {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 16px;
+        }
+        /* Category Filter Bar */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .filter-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #495057;
+            margin-right: 4px;
+        }
+        .filter-btn {
+            background-color: #f1f3f5;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .filter-btn:hover {
+            background-color: #e9ecef;
+            color: #0f2c59;
+        }
+        .filter-btn.active {
+            background-color: #0f2c59;
+            color: #ffffff;
+            border-color: #0f2c59;
+        }
+        /* Flag & Custom Metal/Crypto Icon Styling */
+        .flag-icon {
+            font-size: 1.35rem;
+            border-radius: 2px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+            display: block;
+            margin: 0 auto;
+        }
+        .asset-badge-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 20px;
+            border-radius: 3px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0 auto;
+        }
+        .icon-gold {
+            background: linear-gradient(135deg, #f6e05e, #d69e2e);
+            color: #1a202c;
+            box-shadow: 0 0 0 1px rgba(183, 121, 31, 0.35);
+        }
+        .icon-silver {
+            background-color: #cbd5e1;
+            background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+            color: #1e293b;
+            box-shadow: 0 0 0 1px rgba(100, 116, 139, 0.4);
+        }
+        .icon-crypto {
+            background: linear-gradient(135deg, #2b6cb0, #1a365d);
+            color: #ffffff;
+            box-shadow: 0 0 0 1px rgba(26, 54, 93, 0.25);
+        }
+        .icon-stablecoin {
+            background: linear-gradient(135deg, #2f855a, #22543d);
+            color: #ffffff;
+            box-shadow: 0 0 0 1px rgba(34, 84, 61, 0.25);
+        }
+        .icon-imf {
+            background: #005a9c;
+            color: #ffffff;
+            font-size: 0.62rem;
+        }
+        /* Category Pill Badges */
+        .cat-pill {
+            display: inline-block;
+            padding: 2px 7px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+        .cat-fiat { background-color: #e9ecef; color: #495057; }
+        .cat-metal { background-color: #fefcbf; color: #975a16; }
+        .cat-crypto { background-color: #ebf8ff; color: #2b6cb0; }
+        .cat-stablecoin { background-color: #e6fffa; color: #234e52; }
+
+        /* Trend Metrics */
+        .pos-trend { color: #198754; font-weight: 600; }
+        .neg-trend { color: #dc3545; font-weight: 600; }
+        .neutral-trend { color: #6c757d; }
+
+        /* Toggle Button & Indented $100 USD Section */
+        .toggle-section {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        .toggle-btn {
+            background-color: #0f2c59;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .toggle-btn:hover { background-color: #1a4380; }
+        .usd100-wrapper {
+            display: none;
+            margin-top: 20px;
+            margin-left: 32px;
+            padding: 20px;
+            background-color: #fafbfc;
+            border-left: 4px solid #0f2c59;
+            border-radius: 0 6px 6px 0;
+        }
+        .highlight-major {
+            font-weight: 700;
+            color: #0f2c59;
+        }
+        /* Footer Attribution */
+        .footer-note {
+            max-width: 1450px;
+            margin: 16px auto 0 auto;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #868e96;
+        }
+        /* Small Bottom-Right Refresh Button */
+        .refresh-btn {
+            position: fixed;
+            bottom: 14px;
+            right: 16px;
+            background-color: #ffffff;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0.45;
+            transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            z-index: 999;
+        }
+        .refresh-btn:hover {
+            opacity: 1;
+            color: #0f2c59;
+            border-color: #adb5bd;
+        }
+        @media (max-width: 600px) {
+            body { padding: 12px 12px 56px 12px; }
+            .container { padding: 16px; }
+            .usd100-wrapper { margin-left: 8px; padding: 12px; }
+            .toggle-btn { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Global Exchange Rates, Metals &amp; Crypto (vs. USD)</h1>
+        <div id="dateLog" class="subtitle">Initializing exchange rate matrix...</div>
+
+        <!-- Filter Buttons for Table 1 (Synced with Table 2) -->
+        <div id="primaryFilterBar" class="filter-bar">
+            <span class="filter-label">Filter:</span>
+            <button type="button" class="filter-btn" data-filter="Majors">Majors</button>
+            <button type="button" class="filter-btn" data-filter="All">All Assets</button>
+            <button type="button" class="filter-btn" data-filter="Fiat">Fiat Currencies</button>
+            <button type="button" class="filter-btn" data-filter="Metal">Precious Metals</button>
+            <button type="button" class="filter-btn" data-filter="Crypto">Cryptocurrencies</button>
+            <button type="button" class="filter-btn" data-filter="Stablecoin">Stablecoins</button>
+        </div>
+        
+        <!-- Primary DataTables Container -->
+        <table id="currencyTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th style="text-align: center;">Icon</th>
+                    <th>Pair</th>
+                    <th>Type</th>
+                    <th>Asset Name</th>
+                    <th>Current (in USD)</th>
+                    <th>Yesterday</th>
+                    <th>Daily %</th>
+                    <th>Week Ago</th>
+                    <th>Weekly %</th>
+                    <th>Month Ago</th>
+                    <th>Monthly %</th>
+                    <th>Year Ago</th>
+                    <th>Yearly %</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <!-- Collapsible Secondary $100 USD Conversion Section -->
+        <div class="toggle-section">
+            <button id="toggleUsd100Btn" class="toggle-btn" type="button">
+                See how much $100 USD (US Dollars) are worth...
+            </button>
+
+            <div id="usd100Wrapper" class="usd100-wrapper">
+                <h2>Value of $100 USD &amp; Inverse Rate Pairs (USD / Asset)</h2>
+                <div class="subtitle" style="margin-bottom: 14px;">
+                    Shows how much $100 USD buys plus the inverse pair rate (1 USD = X Asset). Majors highlighted in bold.
+                </div>
+
+                <!-- Filter Buttons for Table 2 (Synced with Table 1) -->
+                <div id="secondaryFilterBar" class="filter-bar">
+                    <span class="filter-label">Filter:</span>
+                    <button type="button" class="filter-btn" data-filter="Majors">Majors</button>
+                    <button type="button" class="filter-btn" data-filter="All">All Assets</button>
+                    <button type="button" class="filter-btn" data-filter="Fiat">Fiat Currencies</button>
+                    <button type="button" class="filter-btn" data-filter="Metal">Precious Metals</button>
+                    <button type="button" class="filter-btn" data-filter="Crypto">Cryptocurrencies</button>
+                    <button type="button" class="filter-btn" data-filter="Stablecoin">Stablecoins</button>
+                </div>
+                <table id="usd100Table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;">Icon</th>
+                            <th>Pair (XXX/USD)</th>
+                            <th>$100 USD Equals</th>
+                            <th>Inverse Rate Pair (USD/XXX)</th>
+                            <th>Asset Name</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">Rates from the fawazahmed0 exchange-api</div>
+
+    <!-- Small Bottom-Right Cache Refresh Button -->
+    <button id="refreshCacheBtn" class="refresh-btn" type="button" title="Clear browser cache and fetch latest rates">
+        &#x21bb; Refresh Rates
+    </button>
+
+    <!-- Required Script Foundations -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.8/js/dataTables.js"></script>
+
+    <script>
+    // =========================================================================
+    // EASY CONFIGURATION SECTION (Edit defaults, Majors, or Assets anytime)
+    // =========================================================================
+
+
+    const CONFIG = {
+        // Default active filter on page load: 'Majors', 'All', 'Fiat', 'Metal', 'Crypto', or 'Stablecoin'
+        defaultFilter: 'Majors',
+
+        // Currencies included in the 'Majors' filter (and highlighted in bold in Table 2)
+        majorList: ['aud', 'cad', 'chf', 'cny', 'eur', 'gbp', 'inr', 'jpy'],
+
+        // Cache lifetime in hours
+        cacheHours: 12
+    };
+
+    const majorCurrencies = new Set(CONFIG.majorList.map(c => c.toLowerCase()));
+
+    // Add or remove any Fiat currency, Precious Metal, Cryptocurrency, or Stablecoin here
+    const trackedAssets = {
+        // --- Fiat Currencies ---
+        aed: { name: "Emirati Dirham", type: "Fiat", flag: "ae", symbol: "AED " },
+        ars: { name: "Argentine Peso", type: "Fiat", flag: "ar", symbol: "ARS " },
+        aud: { name: "Australian Dollar", type: "Fiat", flag: "au", symbol: "A$" },
+        bhd: { name: "Bahraini Dinar", type: "Fiat", flag: "bh", symbol: "BD " },
+        brl: { name: "Brazilian Real", type: "Fiat", flag: "br", symbol: "R$" },
+        bzd: { name: "Belizean Dollar", type: "Fiat", flag: "bz", symbol: "BZ$" },
+        cad: { name: "Canadian Dollar", type: "Fiat", flag: "ca", symbol: "C$" },
+        chf: { name: "Swiss Franc", type: "Fiat", flag: "ch", symbol: "CHF " },
+        clp: { name: "Chilean Peso", type: "Fiat", flag: "cl", symbol: "CLP " },
+        cny: { name: "Chinese Renminbi (Yuan)", type: "Fiat", flag: "cn", symbol: "¥" },
+        cop: { name: "Colombian Peso", type: "Fiat", flag: "co", symbol: "COP " },
+        crc: { name: "Costa Rican Colon", type: "Fiat", flag: "cr", symbol: "₡" },
+        czk: { name: "Czech Koruna", type: "Fiat", flag: "cz", symbol: "Kč " },
+        dkk: { name: "Danish Krone", type: "Fiat", flag: "dk", symbol: "kr " },
+        egp: { name: "Egyptian Pound", type: "Fiat", flag: "eg", symbol: "E£" },
+        eur: { name: "Eurozone Euro", type: "Fiat", flag: "eu", symbol: "€" },
+        gbp: { name: "British Pound Sterling", type: "Fiat", flag: "gb", symbol: "£" },
+        hkd: { name: "Hong Kong Dollar", type: "Fiat", flag: "hk", symbol: "HK$" },
+        idr: { name: "Indonesian Rupiah", type: "Fiat", flag: "id", symbol: "Rp " },
+        ils: { name: "Israeli Shekel", type: "Fiat", flag: "il", symbol: "₪" },
+        inr: { name: "Indian Rupee", type: "Fiat", flag: "in", symbol: "₹" },
+        irr: { name: "Iranian Rial", type: "Fiat", flag: "ir", symbol: "IRR " },
+        jpy: { name: "Japanese Yen", type: "Fiat", flag: "jp", symbol: "¥" },
+        kes: { name: "Kenyan Shilling", type: "Fiat", flag: "ke", symbol: "KSh " },
+        krw: { name: "South Korean Won", type: "Fiat", flag: "kr", symbol: "₩" },
+        kyd: { name: "Caymanian Dollar", type: "Fiat", flag: "ky", symbol: "CI$" },
+        kzt: { name: "Kazakhstani Tenge", type: "Fiat", flag: "kz", symbol: "₸" },
+        lkr: { name: "Sri Lankan Rupee", type: "Fiat", flag: "lk", symbol: "Rs " },
+        mxn: { name: "Mexican Peso", type: "Fiat", flag: "mx", symbol: "Mex$" },
+        myr: { name: "Malaysian Ringgit", type: "Fiat", flag: "my", symbol: "RM " },
+        ngn: { name: "Nigerian Naira", type: "Fiat", flag: "ng", symbol: "₦" },
+        nok: { name: "Norwegian Krone", type: "Fiat", flag: "no", symbol: "kr " },
+        npr: { name: "Nepalese Rupee", type: "Fiat", flag: "np", symbol: "Rs " },
+        nzd: { name: "New Zealand Dollar", type: "Fiat", flag: "nz", symbol: "NZ$" },
+        omr: { name: "Omani Rial", type: "Fiat", flag: "om", symbol: "OMR " },
+        pab: { name: "Panamanian Balboa", type: "Fiat", flag: "pa", symbol: "B/. " },
+        pen: { name: "Peruvian Sol", type: "Fiat", flag: "pe", symbol: "S/ " },
+        php: { name: "Philippine Peso", type: "Fiat", flag: "ph", symbol: "₱" },
+        pln: { name: "Polish Zloty", type: "Fiat", flag: "pl", symbol: "zł " },
+        qar: { name: "Qatari Riyal", type: "Fiat", flag: "qa", symbol: "QR " },
+        rub: { name: "Russian Ruble", type: "Fiat", flag: "ru", symbol: "₽" },
+        sar: { name: "Saudi Arabian Riyal", type: "Fiat", flag: "sa", symbol: "SAR " },
+        sek: { name: "Swedish Krona", type: "Fiat", flag: "se", symbol: "kr " },
+        sgd: { name: "Singapore Dollar", type: "Fiat", flag: "sg", symbol: "S$" },
+        thb: { name: "Thai Baht", type: "Fiat", flag: "th", symbol: "฿" },
+        try: { name: "Turkish Lira", type: "Fiat", flag: "tr", symbol: "₺" },
+        twd: { name: "New Taiwan Dollar", type: "Fiat", flag: "tw", symbol: "NT$" },
+        tzs: { name: "Tanzanian Shilling", type: "Fiat", flag: "tz", symbol: "TSh " },
+        uah: { name: "Ukrainian Hryvnia", type: "Fiat", flag: "ua", symbol: "₴" },
+        ugx: { name: "Ugandan Shilling", type: "Fiat", flag: "ug", symbol: "USh " },
+        uyu: { name: "Uruguayan Peso", type: "Fiat", flag: "uy", symbol: "$U " },
+        ves: { name: "Venezuelan Bolívar", type: "Fiat", flag: "ve", symbol: "Bs. " },
+        vnd: { name: "Vietnamese Dong", type: "Fiat", flag: "vn", symbol: "₫" },
+        xdr: { name: "IMF Special Drawing Rights", type: "Fiat", badge: "IMF", badgeClass: "icon-imf", symbol: "SDR " },
+        zar: { name: "South African Rand", type: "Fiat", flag: "za", symbol: "R " },
+
+        // --- Precious Metals (Gold = Gold icon, Silver/Palladium/Platinum = Silver/Grey icon) ---
+        xag: { name: "Silver Ounce", type: "Metal", badge: "Ag", badgeClass: "icon-silver", symbol: "" },
+        xau: { name: "Gold Ounce", type: "Metal", badge: "Au", badgeClass: "icon-gold", symbol: "" },
+        xpd: { name: "Palladium Ounce", type: "Metal", badge: "Pd", badgeClass: "icon-silver", symbol: "" },
+        xpt: { name: "Platinum Ounce", type: "Metal", badge: "Pt", badgeClass: "icon-silver", symbol: "" },
+
+        // --- Cryptocurrencies ---
+        btc:  { name: "Bitcoin", type: "Crypto", badge: "BTC", badgeClass: "icon-crypto", symbol: "₿" },
+        btg:  { name: "Bitcoin Gold", type: "Crypto", badge: "BTG", badgeClass: "icon-crypto", symbol: "" },
+        etc:  { name: "Ethereum Classic", type: "Crypto", badge: "ETC", badgeClass: "icon-crypto", symbol: "" },
+        eth:  { name: "Ethereum", type: "Crypto", badge: "ETH", badgeClass: "icon-crypto", symbol: "Ξ" },
+        sol:  { name: "Solana", type: "Crypto", badge: "SOL", badgeClass: "icon-crypto", symbol: "" },
+        xaut: { name: "Tether Gold", type: "Crypto", badge: "XAUT", badgeClass: "icon-crypto", symbol: "" },
+        xmr:  { name: "Monero", type: "Crypto", badge: "XMR", badgeClass: "icon-crypto", symbol: "" },
+        xrp:  { name: "Ripple", type: "Crypto", badge: "XRP", badgeClass: "icon-crypto", symbol: "" },
+
+        // --- Stablecoins ---
+        busd: { name: "Binance USD", type: "Stablecoin", badge: "BUSD", badgeClass: "icon-stablecoin", symbol: "" },
+        dai:  { name: "DAI", type: "Stablecoin", badge: "DAI", badgeClass: "icon-stablecoin", symbol: "" },
+        tusd: { name: "True USD", type: "Stablecoin", badge: "TUSD", badgeClass: "icon-stablecoin", symbol: "" },
+        usdc: { name: "USDC", type: "Stablecoin", badge: "USDC", badgeClass: "icon-stablecoin", symbol: "" },
+        usdp: { name: "USDP Stablecoin", type: "Stablecoin", badge: "USDP", badgeClass: "icon-stablecoin", symbol: "" },
+        usdt: { name: "Tether", type: "Stablecoin", badge: "USDT", badgeClass: "icon-stablecoin", symbol: "₮" }
+    };
+       
+    // 1. Date Calculations (UTC aligned with fawazahmed0 daily snapshots)
+    const todayDate = new Date();
+    const todayStr = todayDate.toISOString().split('T')[0]; 
+
+    const getPastDateStr = (daysAgo, monthsAgo, yearsAgo) => {
+        const d = new Date(todayStr + 'T00:00:00Z');
+        if (daysAgo) d.setUTCDate(d.getUTCDate() - daysAgo);
+        if (monthsAgo) d.setUTCMonth(d.getUTCMonth() - monthsAgo);
+        if (yearsAgo) d.setUTCFullYear(d.getUTCFullYear() - yearsAgo);
+        return d.toISOString().split('T')[0];
+    };
+
+    const targetDates = {
+        today: 'latest',
+        yesterday: getPastDateStr(1, 0, 0),
+        weekAgo: getPastDateStr(7, 0, 0),
+        monthAgo: getPastDateStr(0, 1, 0),
+        yearAgo: getPastDateStr(0, 0, 1)
+    };
+
+    // Extract direct rate (1 USD = X Target) from json["usd"][code]
+    const getDirectUsdToTarget = (snapshotObj, code) => {
+        if (!snapshotObj || typeof snapshotObj[code] !== 'number' || snapshotObj[code] === 0) return null;
+        return snapshotObj[code];
+    };
+
+    // Calculate per-USD rate (XXX/USD = 1 / json["usd"][code])
+    const getPerUsdRate = (snapshotObj, code) => {
+        const direct = getDirectUsdToTarget(snapshotObj, code);
+        if (direct === null) return null;
+        return 1 / direct;
+    };
+
+    const formatRate = (val) => {
+        if (val === null || val === undefined || isNaN(val)) return "N/A";
+        if (val === 0) return "0.0000";
+        if (val < 0.0001) return val.toFixed(8);
+        if (val < 0.01) return val.toFixed(6);
+        if (val >= 1000) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return val.toFixed(4);
+    };
+
+    const formatUsd100 = (directUsdToTarget) => {
+        if (directUsdToTarget === null || directUsdToTarget === undefined || isNaN(directUsdToTarget)) return "N/A";
+        const converted = 100 * directUsdToTarget;
+        if (converted < 0.01) return converted.toFixed(6);
+        if (converted < 1) return converted.toFixed(4);
+        return converted.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const calculateTrendMetric = (current, historical) => {
+        if (!current || !historical) return `<span class="neutral-trend">N/A</span>`;
+        const delta = ((current - historical) / historical) * 100;
+        const formatted = delta.toFixed(2) + "%";
+        if (delta > 0) return `<span class="pos-trend">+${formatted}</span>`;
+        if (delta < 0) return `<span class="neg-trend">${formatted}</span>`;
+        return `<span class="neutral-trend">${formatted}</span>`;
+    };
+
+    const getAssetIconHtml = (asset) => {
+        if (asset.flag) {
+            return `<span class="fi fi-${asset.flag} flag-icon" title="${asset.name}"></span>`;
+        }
+        return `<span class="asset-badge-icon ${asset.badgeClass}" title="${asset.name}">${asset.badge}</span>`;
+    };
+
+    const getCategoryPill = (type) => {
+        const clsMap = {
+            Metal: 'cat-metal',
+            Crypto: 'cat-crypto',
+            Stablecoin: 'cat-stablecoin',
+            Fiat: 'cat-fiat'
+        };
+        const cls = clsMap[type] || 'cat-fiat';
+        return `<span class="cat-pill ${cls}">${type}</span>`;
+    };
+
+    // Fetch single date snapshot with automatic jsDelivr -> Cloudflare Pages fallback
+    const fetchDateSnapshot = async (dateTag) => {
+        const primaryUrl = `https://jsdelivr.net{dateTag}/v1/currencies/usd.min.json`;
+        const fallbackUrl = `https://${dateTag}.currency-api.pages.dev/v1/currencies/usd.min.json`;
+
+        try {
+            const res = await fetch(primaryUrl);
+            if (!res.ok) throw new Error(`Primary CDN HTTP ${res.status}`);
+            const json = await res.json();
+            return json["usd"] || {};
+        } catch (err) {
+            console.warn(`Primary CDN failed for ${dateTag}, trying fallback:`, err);
+            try {
+                const fallbackRes = await fetch(fallbackUrl);
+                if (!fallbackRes.ok) throw new Error(`Fallback HTTP ${fallbackRes.status}`);
+                const fallbackJson = await fallbackRes.json();
+                return fallbackJson["usd"] || {};
+            } catch (fallbackErr) {
+                console.warn(`Fallback also failed for ${dateTag}:`, fallbackErr);
+                return {};
+            }
+        }
+    };
+
+    let cachedSnapshots = null;
+    let currentSourceLabel = '';
+    let activeFilter = CONFIG.defaultFilter;
+
+    let primaryDataTable = null;
+    let usd100DataTable = null;
+
+    // Filter matcher helper
+    const matchesFilter = (code, asset, filterType) => {
+        if (filterType === 'All') return true;
+        if (filterType === 'Majors') return majorCurrencies.has(code);
+        return asset.type === filterType;
+    };
+
+    // Render Table 1 (XXX/USD)
+    const renderPrimaryTable = () => {
+        if (!cachedSnapshots) return;
+        const primaryRows = [];
+
+        const sortedCodes = Object.keys(trackedAssets).sort();
+
+        sortedCodes.forEach(code => {
+            const asset = trackedAssets[code];
+            if (!matchesFilter(code, asset, activeFilter)) return;
+
+            const pairLabel = `${code.toUpperCase()}/USD`;
+            const iconHtml = getAssetIconHtml(asset);
+            const catPill = getCategoryPill(asset.type);
+
+            const curRate = getPerUsdRate(cachedSnapshots.today, code);
+            const yestRate = getPerUsdRate(cachedSnapshots.yesterday, code);
+            const weekRate = getPerUsdRate(cachedSnapshots.weekAgo, code);
+            const monthRate = getPerUsdRate(cachedSnapshots.monthAgo, code);
+            const yearRate = getPerUsdRate(cachedSnapshots.yearAgo, code);
+
+            primaryRows.push([
+                iconHtml,
+                pairLabel,
+                catPill,
+                asset.name,
+                formatRate(curRate),
+                formatRate(yestRate),
+                calculateTrendMetric(curRate, yestRate),
+                formatRate(weekRate),
+                calculateTrendMetric(curRate, weekRate),
+                formatRate(monthRate),
+                calculateTrendMetric(curRate, monthRate),
+                formatRate(yearRate),
+                calculateTrendMetric(curRate, yearRate)
+            ]);
+        });
+
+        if (primaryDataTable) primaryDataTable.destroy();
+
+        primaryDataTable = new DataTable('#currencyTable', {
+            data: primaryRows,
+            pageLength: 25,
+            order: [[1, "asc"]],
+            responsive: true,
+            columnDefs: [
+                { orderable: false, searchable: false, targets: 0, width: "45px" }
+            ]
+        });
+    };
+
+    // Render Table 2 ($100 USD Equals + Inverse Rate Pair USD/XXX)
+    const renderSecondaryTable = () => {
+        if (!cachedSnapshots) return;
+        const usd100Rows = [];
+
+        const sortedCodes = Object.keys(trackedAssets).sort();
+
+        sortedCodes.forEach(code => {
+            const asset = trackedAssets[code];
+            if (!matchesFilter(code, asset, activeFilter)) return;
+
+            const pairLabel = `${code.toUpperCase()}/USD`;
+            const inversePairLabel = `USD/${code.toUpperCase()}`;
+            const iconHtml = getAssetIconHtml(asset);
+
+            const directRate = getDirectUsdToTarget(cachedSnapshots.today, code);
+            const isMajor = majorCurrencies.has(code);
+
+            const convertedStr = directRate !== null 
+                ? `${asset.symbol}${formatUsd100(directRate)} ${code.toUpperCase()}`
+                : "N/A";
+
+            const inverseStr = directRate !== null
+                ? `${formatRate(directRate)} (${inversePairLabel})`
+                : "N/A";
+
+            const fmtPair = isMajor ? `<span class="highlight-major">${pairLabel}</span>` : pairLabel;
+            const fmtConverted = isMajor ? `<span class="highlight-major">${convertedStr}</span>` : convertedStr;
+            const fmtInverse = isMajor ? `<span class="highlight-major">${inverseStr}</span>` : inverseStr;
+            const fmtName = isMajor ? `<span class="highlight-major">${asset.name}</span>` : asset.name;
+
+            usd100Rows.push([
+                iconHtml,
+                fmtPair,
+                fmtConverted,
+                fmtInverse,
+                fmtName
+            ]);
+        });
+
+        if (usd100DataTable) usd100DataTable.destroy();
+
+        usd100DataTable = new DataTable('#usd100Table', {
+            data: usd100Rows,
+            pageLength: 25,
+            order: [[1, "asc"]],
+            responsive: true,
+            columnDefs: [
+                { orderable: false, searchable: false, targets: 0, width: "45px" }
+            ]
+        });
+    };
+
+    // Sync active state across ALL filter buttons on the page
+    const applySyncedFilter = (filterValue) => {
+        activeFilter = filterValue;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filterValue);
+        });
+        renderPrimaryTable();
+        renderSecondaryTable();
+    };
+
+    // 12-Hour LocalStorage Cache Controller
+    const CACHE_KEY = 'fawaz_usd_fx_cache_v3';
+    const CACHE_TTL_MS = CONFIG.cacheHours * 60 * 60 * 1000;
+
+    const loadExchangeData = async (forceRefresh = false) => {
+        if (!forceRefresh) {
+            try {
+                const cachedRaw = localStorage.getItem(CACHE_KEY);
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw);
+                    const isFresh = (Date.now() - cached.timestamp) < CACHE_TTL_MS;
+                    const isSameDay = cached.baselineDate === todayStr;
+
+                    if (isFresh && isSameDay && cached.snapshots) {
+                        const cachedTime = new Date(cached.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        cachedSnapshots = cached.snapshots;
+                        currentSourceLabel = `Browser Cache (saved at ${cachedTime})`;
+                        document.getElementById('dateLog').innerText = 
+                            `Quote Convention: XXX/USD • Reference Date: ${todayStr} (UTC) • Source: ${currentSourceLabel}`;
+                        applySyncedFilter(activeFilter);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("Cache read failed, falling back to live API:", e);
+            }
+        }
+
+        try {
+            document.getElementById('dateLog').innerText = "Fetching latest USD rates, metals & crypto snapshots...";
+            
+            const [today, yesterday, weekAgo, monthAgo, yearAgo] = await Promise.all([
+                fetchDateSnapshot(targetDates.today),
+                fetchDateSnapshot(targetDates.yesterday),
+                fetchDateSnapshot(targetDates.weekAgo),
+                fetchDateSnapshot(targetDates.monthAgo),
+                fetchDateSnapshot(targetDates.yearAgo)
+            ]);
+
+            cachedSnapshots = { today, yesterday, weekAgo, monthAgo, yearAgo };
+            currentSourceLabel = "Live fawazahmed0 Currency API";
+
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    timestamp: Date.now(),
+                    baselineDate: todayStr,
+                    snapshots: cachedSnapshots
+                }));
+            } catch (storageErr) {
+                console.warn("Unable to write to localStorage:", storageErr);
+            }
+
+            document.getElementById('dateLog').innerText = 
+                `Quote Convention: XXX/USD • Reference Date: ${todayStr} (UTC) • Source: ${currentSourceLabel}`;
+            applySyncedFilter(activeFilter);
+        } catch (error) {
+            console.error("Failed to fetch exchange snapshots:", error);
+            document.getElementById('dateLog').innerText = "Failed to load exchange rate data. Check console for details.";
+        }
+    };
+
+    // Wire up Synced Filter Bars (clicking any filter button updates BOTH tables)
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            applySyncedFilter(btn.dataset.filter);
+        });
+    });
+
+    // Wire up Toggle Button & Small Refresh Button
+    const toggleBtn = document.getElementById('toggleUsd100Btn');
+    const usd100Wrapper = document.getElementById('usd100Wrapper');
+
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = usd100Wrapper.style.display === 'none' || usd100Wrapper.style.display === '';
+        if (isHidden) {
+            usd100Wrapper.style.display = 'block';
+            toggleBtn.innerText = 'Hide $100 USD conversion table';
+            if (usd100DataTable) {
+                usd100DataTable.columns.adjust().draw(false);
+            }
+        } else {
+            usd100Wrapper.style.display = 'none';
+            toggleBtn.innerText = 'See how much $100 USD (US Dollars) are worth...';
+        }
+    });
+
+    document.getElementById('refreshCacheBtn').addEventListener('click', () => {
+        localStorage.removeItem(CACHE_KEY);
+        loadExchangeData(true);
+    });
+
+    // Set initial active pill states and load data
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === activeFilter);
+    });
+    loadExchangeData();
+    </script>
+</body>
+</html>
+
+
+
